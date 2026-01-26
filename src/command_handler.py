@@ -4,8 +4,9 @@ from commands.session_list import list_sessions_command
 from commands.session_display import display_full_session
 from commands.session_to_pdf import export_session_to_pdf
 from commands.session_remove import remove_session_command
+from commands.audio import generate_audio, generate_audio_all
 
-VALID_SLASH_COMMANDS = ['/exit', '/quit', '/switch', '/help', '/session', '/pdf']
+VALID_SLASH_COMMANDS = ['/exit', '/quit', '/switch', '/help', '/session', '/pdf', '/audio', '/audio-all']
 
 def handle_command(user_input: str) -> bool:
     """
@@ -22,7 +23,12 @@ def handle_command(user_input: str) -> bool:
         current = manager.get_current_session()
         console.display_help(current.session_id)
         return False
-    
+    elif command == '/audio':
+        current = manager.get_current_session()
+        generate_audio(current.get_history())
+    elif command == '/audio-all':
+        current = manager.get_current_session()
+        generate_audio_all(current.get_history())
     # Help command
     elif command == '/help':
         current = manager.get_current_session()

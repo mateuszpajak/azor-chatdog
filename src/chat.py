@@ -6,6 +6,7 @@ import command_handler
 from cli import console
 from cli.prompt import get_user_input
 from commands.welcome import print_welcome
+from audio.audio_generator import load_model
 
 def init_chat():
     """Initializes a new session or loads an existing one."""
@@ -16,6 +17,9 @@ def init_chat():
     cli_session_id = cli.args.get_session_id_from_cli()
     session = manager.initialize_from_cli(cli_session_id)
     
+    # Load TTS model
+    load_model()
+
     # Register cleanup handler
     atexit.register(lambda: manager.cleanup_and_save())
 

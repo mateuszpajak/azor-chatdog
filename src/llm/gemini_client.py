@@ -77,7 +77,7 @@ class GeminiLLMClient:
     Provides a clean interface for chat sessions, token counting, and configuration.
     """
     
-    def __init__(self, model_name: str, api_key: str, temperature: float, top_p: float, top_k: float):
+    def __init__(self, model_name: str, api_key: str, temperature: float, top_p: float, top_k: int):
         """
         Initialize the Gemini LLM client with explicit parameters.
         

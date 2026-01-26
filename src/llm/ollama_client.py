@@ -116,12 +116,10 @@ class OllamaClient:
 
                 if "parts" in message and message["parts"]:
                     text_content = message["parts"][0].get("text", "")
-                    console.print_info(f"Text content: {text_content}")
                     if text_content:
                         num_tokens += len(encoding.encode(text_content))
                 
                 if "role" in message:
-                    console.print_info(f"Role: {message["role"]}")
                     num_tokens += len(encoding.encode(message["role"]))
             
             # Każda odpowiedź jest poprzedzona <|start|>assistant<|message|>

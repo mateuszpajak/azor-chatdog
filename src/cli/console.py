@@ -66,6 +66,8 @@ def display_help(session_id: str):
     print_help("  /session pop      - Usuwa ostatnią parę wpisów (TY i asystent).")
     print_help("  /session clear    - Czyści historię bieżącej sesji.")
     print_help("  /session new      - Rozpoczyna nową sesję.")
+    print_help("\n  /audio            - Generuje głos Azora do pliku.")
+    print_help("  /audio-all        - Generuje głos Azora i użytkownika do pliku.")
 
 
 def display_final_instructions(session_id: str):

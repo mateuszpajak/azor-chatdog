@@ -8,3 +8,7 @@ fpdf2
 markdown
 openai
 tiktoken
+coqui-tts
+torchcodec
+torchaudio
+pydub
