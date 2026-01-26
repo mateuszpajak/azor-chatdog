@@ -221,3 +221,5 @@ __marimo__/
 # Cursor
 .cursor/
 .cursorignore
+
+.DS_Store
