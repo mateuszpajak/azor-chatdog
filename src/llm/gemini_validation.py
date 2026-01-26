@@ -5,6 +5,9 @@ class GeminiConfig(BaseModel):
     engine: Literal["GEMINI"] = Field(default="GEMINI")
     model_name: str = Field(..., description="Nazwa modelu Gemini")
     gemini_api_key: str = Field(..., min_length=1, description="Klucz API Google Gemini")
+    temperature: Optional[float] = Field(None, description="Wartość parametru temperature")
+    top_p: Optional[float] = Field(None, description="Wartość parametru top_p")
+    top_k: Optional[float] = Field(None, description="Wartość parametru top_k")
     
     @validator('gemini_api_key')
     def validate_api_key(cls, v):

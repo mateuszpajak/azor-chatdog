@@ -12,6 +12,10 @@ from dotenv import load_dotenv
 from cli import console
 from .gemini_validation import GeminiConfig
 
+DEFAULT_TEMPERATURE = 1
+DEFAULT_TOP_P = 0.95
+DEFAULT_TOP_K = 20
+
 class GeminiChatSessionWrapper:
     """
     Wrapper for Gemini chat session that provides universal dictionary-based history format.
@@ -73,7 +77,7 @@ class GeminiLLMClient:
     Provides a clean interface for chat sessions, token counting, and configuration.
     """
     
-    def __init__(self, model_name: str, api_key: str):
+    def __init__(self, model_name: str, api_key: str, temperature: float, top_p: float, top_k: float):
         """
         Initialize the Gemini LLM client with explicit parameters.
         
@@ -89,6 +93,9 @@ class GeminiLLMClient:
         
         self.model_name = model_name
         self.api_key = api_key
+        self.temperature = temperature
+        self.top_p = top_p
+        self.top_k = top_k
         
         # Initialize the client during construction
         self._client = self._initialize_client()
@@ -119,10 +126,19 @@ class GeminiLLMClient:
         # Walidacja z Pydantic
         config = GeminiConfig(
             model_name=os.getenv('MODEL_NAME', 'gemini-2.5-flash'),
-            gemini_api_key=os.getenv('GEMINI_API_KEY', '')
+            gemini_api_key=os.getenv('GEMINI_API_KEY', ''),
+            temperature=os.getenv('TEMPERATURE', DEFAULT_TEMPERATURE),
+            top_p=os.getenv("TOP_P", DEFAULT_TOP_P),
+            top_k=os.getenv("TOP_K", DEFAULT_TOP_K)
         )
         
-        return cls(model_name=config.model_name, api_key=config.gemini_api_key)
+        return cls(
+                model_name=config.model_name, 
+                api_key=config.gemini_api_key,
+                temperature=config.temperature,
+                top_p=config.top_p,
+                top_k=config.top_k
+            )
     
     def _initialize_client(self) -> genai.Client:
         """
@@ -176,7 +192,10 @@ class GeminiLLMClient:
             history=gemini_history,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
-                thinking_config=types.ThinkingConfig(thinking_budget=thinking_budget)
+                thinking_config=types.ThinkingConfig(thinking_budget=thinking_budget),
+                temperature=self.temperature,
+                top_p=self.top_p,
+                top_k=self.top_k
             )
         )
         
@@ -243,7 +262,7 @@ class GeminiLLMClient:
         else:
             masked_key = f"{self.api_key[:4]}...{self.api_key[-4:]}"
         
-        return f"✅ Klient Gemini gotowy do użycia (Model: {self.model_name}, Key: {masked_key})"
+        return f"✅ Klient Gemini gotowy do użycia (Model: {self.model_name}, Key: {masked_key})" + f"\n⚙️  Ustawione parametry: temperature: {self.temperature}, top_p: {self.top_p}, top_k: {self.top_k} ";
     
     @property
     def client(self):
