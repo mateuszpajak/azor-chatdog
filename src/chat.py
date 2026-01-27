@@ -45,6 +45,9 @@ def main_loop():
             
             # Send message (handles WAL logging internally)
             response = session.send_message(user_input)
+
+            # Generate session name if it's the first query
+            session_name = session.generate_session_name(user_input)
             
             # Get token information
             total_tokens, remaining_tokens, max_tokens = session.get_token_info()
@@ -54,7 +57,7 @@ def main_loop():
             console.print_info(f"Tokens: {total_tokens} (Pozostało: {remaining_tokens} / {max_tokens})")
 
             # Save session
-            success, error = session.save_to_file()
+            success, error = session.save_to_file(session_name)
             if not success and error:
                 console.print_error(f"Error saving session: {error}")
 

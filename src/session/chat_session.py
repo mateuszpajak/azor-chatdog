@@ -8,6 +8,7 @@ from llm.llama_client import LlamaClient
 from llm.ollama_client import OllamaClient
 from assistant import Assistant
 from cli import console
+from session.session_name import generate_session_name
 
 # Context token limit
 
@@ -87,10 +88,13 @@ class ChatSession:
         session = cls(assistant=assistant, session_id=session_id, history=history)
         return session, None
     
-    def save_to_file(self) -> tuple[bool, str | None]:
+    def save_to_file(self, session_name: str | None = None) -> tuple[bool, str | None]:
         """
         Saves this session to disk.
         Only saves if history has at least one complete exchange.
+        
+        Args:
+            session_name: Optional session name to save (used for first query title generation)
         
         Returns:
             tuple: (success: bool, error_message: str | None)
@@ -103,7 +107,8 @@ class ChatSession:
             self.session_id, 
             self._history, 
             self.assistant.system_prompt, 
-            self._llm_client.get_model_name()
+            self._llm_client.get_model_name(),
+            session_name
         )
     
     def send_message(self, text: str):
@@ -141,6 +146,13 @@ class ChatSession:
             pass
         
         return response
+
+    def generate_session_name(self, text: str) -> str:
+        is_first_query = len(self._history) == 2
+        if is_first_query:
+            return generate_session_name(text, self._llm_client)
+
+        return None
     
     def get_history(self) -> List[Any]:
         """Returns the current conversation history."""

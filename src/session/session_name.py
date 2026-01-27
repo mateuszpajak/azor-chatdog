@@ -2,6 +2,7 @@
 import os
 import json
 from files.config import LOG_DIR
+from cli import console
 
 def update_session_name(session_id: str, new_name: str) -> tuple[bool, str | None]:
     log_path = os.path.join(LOG_DIR, f"{session_id}-log.json")
@@ -32,3 +33,27 @@ def read_session_name(session_id: str) -> str:
             return (log_data.get("session_name") or "").strip()
     except Exception:
         return ""
+
+def generate_session_name(user_prompt: str, llm_client) -> str:
+    title_system_prompt = """
+        Stwórz krótki, zwięzły tytuł (maksymalnie 50-60 znaków) podsumowujący następujące zapytanie użytkownika. 
+        Tytuł powinien być w języku polskim i opisywać główny temat zapytania. Zwróć TYLKO tytuł, bez dodatkowych komentarzy.
+    """
+    title_prompt = f"Zapytanie użytkownika: {user_prompt}\n\nTytuł:"
+    
+    try:
+        temp_session = llm_client.create_chat_session(
+            system_instruction=title_system_prompt,
+            history=[],
+            thinking_budget=0
+        )
+        
+        response = temp_session.send_message(title_prompt)
+        title = response.text.strip()
+        if len(title) > 60:
+            title = title[:57] + "..."
+        
+        return title
+    except Exception as e:
+        console.print_error(f"Błąd podczas generowania tytułu sesji: {e}")
+        return user_prompt[:20] + "..."

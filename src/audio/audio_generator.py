@@ -1,6 +1,5 @@
 import os
 
-from sympy.core.relational import is_ge
 from cli import console
 from datetime import datetime
 from files.config import OUTPUT_DIR

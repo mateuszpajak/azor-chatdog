@@ -36,7 +36,7 @@ def load_session_history(session_id: str) -> tuple[List[Dict], str | None]:
 
     return history, None
 
-def save_session_history(session_id: str, history: List[Dict], system_prompt: str, model_name: str) -> tuple[bool, str | None]:
+def save_session_history(session_id: str, history: List[Dict], system_prompt: str, model_name: str, session_name: str | None = None) -> tuple[bool, str | None]:
     """
     Saves the current session history to a JSON file,
     only if the history contains at least one complete turn (User + Model).
@@ -46,6 +46,7 @@ def save_session_history(session_id: str, history: List[Dict], system_prompt: st
         history: Conversation history to save (universal format: List of dicts)
         system_prompt: System prompt used for the assistant
         model_name: Name of the LLM model used
+        session_name: Optional session name to save (if None, reads from file)
     
     Returns:
         tuple[bool, str | None]: (success, error_message)
@@ -72,11 +73,12 @@ def save_session_history(session_id: str, history: List[Dict], system_prompt: st
                 'text': text_part
             })
 
+    final_session_name = session_name if session_name is not None else read_session_name(session_id)
     log_data = {
         'session_id': session_id,
         'model': model_name,
         'system_role': system_prompt,
-        'session_name': read_session_name(session_id),
+        'session_name': final_session_name,
         'history': json_history
     }
 
