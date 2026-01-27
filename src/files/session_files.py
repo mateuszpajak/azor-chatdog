@@ -1,8 +1,9 @@
 import os
 import json
 from datetime import datetime
-from typing import List, Any, Dict
+from typing import List, Dict
 from files.config import LOG_DIR
+from session.session_name import read_session_name
 
 def load_session_history(session_id: str) -> tuple[List[Dict], str | None]:
     """
@@ -75,6 +76,7 @@ def save_session_history(session_id: str, history: List[Dict], system_prompt: st
         'session_id': session_id,
         'model': model_name,
         'system_role': system_prompt,
+        'session_name': read_session_name(session_id),
         'history': json_history
     }
 
@@ -99,6 +101,7 @@ def list_sessions():
                 log_data = json.load(f)
                 history_len = len(log_data.get('history', []))
                 last_msg_time_str = log_data.get('history', [{}])[-1].get('timestamp', 'Brak daty')
+                session_name = log_data.get('session_name', '').strip()
                 
                 time_str = 'Brak aktywności'
                 if last_msg_time_str != 'Brak daty':
@@ -110,6 +113,7 @@ def list_sessions():
             
             sessions_data.append({
                 'id': sid,
+                'session_name': session_name,
                 'messages_count': history_len,
                 'last_activity': time_str,
                 'error': None

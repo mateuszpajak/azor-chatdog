@@ -4,6 +4,8 @@ from commands.session_list import list_sessions_command
 from commands.session_display import display_full_session
 from commands.session_to_pdf import export_session_to_pdf
 from commands.session_remove import remove_session_command
+from commands.session_rename import rename_session_command
+from commands.session_title import show_session_title_command
 from commands.audio import generate_audio, generate_audio_all
 
 VALID_SLASH_COMMANDS = ['/exit', '/quit', '/switch', '/help', '/session', '/pdf', '/audio', '/audio-all']
@@ -71,9 +73,9 @@ def handle_command(user_input: str) -> bool:
     # Session subcommands
     elif command == '/session':
         if len(parts) < 2:
-            console.print_error("Błąd: Komenda /session wymaga podkomendy (list, display, pop, clear, new).")
+            console.print_error("Błąd: Komenda /session wymaga podkomendy (list, display, pop, clear, new, rename, title).")
         else:
-            handle_session_subcommand(parts[1].lower(), manager)
+            handle_session_subcommand(parts, manager)
 
     elif command == '/pdf':
         current = manager.get_current_session()
@@ -82,10 +84,11 @@ def handle_command(user_input: str) -> bool:
     return False
 
 
-def handle_session_subcommand(subcommand: str, manager):
+def handle_session_subcommand(parts: list, manager):
     """Handles /session subcommands."""
     current = manager.get_current_session()
     
+    subcommand = parts[1].lower()
     if subcommand == 'list':
         list_sessions_command()
         
@@ -120,6 +123,16 @@ def handle_session_subcommand(subcommand: str, manager):
 
     elif subcommand == 'remove':
         remove_session_command(manager)
+    
+    elif subcommand == 'rename':
+        if len(parts) < 3:
+            console.print_error("Błąd: Musisz podać nazwę sesji. Użycie: /session rename <NEW_TITLE>")
+        else:
+            new_name = ' '.join(parts[2:])
+            rename_session_command(current.session_id, new_name)
+
+    elif subcommand == 'title':
+        show_session_title_command(current.session_id)
         
     else:
         console.print_error(f"Błąd: Nieznana podkomenda dla /session: {subcommand}. Użyj /help.")
