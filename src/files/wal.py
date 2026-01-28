@@ -4,7 +4,7 @@ from datetime import datetime
 from files.config import WAL_FILE
 
 
-def append_to_wal(session_id: str, prompt: str, response_text: str, total_tokens: int, model_name: str) -> tuple[bool, str | None]:
+def append_to_wal(session_id: str, prompt: str, response_text: str, total_tokens: int, model_name: str, agent: str) -> tuple[bool, str | None]:
     """
     Appends a transaction to the WAL (Write-Ahead Log) file.
     
@@ -14,7 +14,7 @@ def append_to_wal(session_id: str, prompt: str, response_text: str, total_tokens
         response_text: Model's response text
         total_tokens: Total tokens used in the conversation
         model_name: Name of the LLM model used
-    
+        agent: Name of the agent used for this message
     Returns:
         tuple[bool, str | None]: (success, error_message)
     """
@@ -23,6 +23,7 @@ def append_to_wal(session_id: str, prompt: str, response_text: str, total_tokens
         'timestamp': datetime.now().isoformat(),
         'session_id': session_id,
         'model': model_name,
+        'agent': agent,
         'prompt': prompt,
         'response': response_text,
         'tokens_used': total_tokens

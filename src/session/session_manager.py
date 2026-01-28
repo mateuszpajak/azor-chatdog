@@ -1,8 +1,7 @@
 from cli import console
 from .chat_session import ChatSession
-from assistant import create_azor_assistant
+from agents import get_default_agent_instance
 from files import session_files
-
 
 class SessionManager:
     """
@@ -56,7 +55,7 @@ class SessionManager:
                 save_error = error
         
         # Create new session
-        assistant = create_azor_assistant()
+        assistant = get_default_agent_instance()
         new_session = ChatSession(assistant=assistant)
         self._current_session = new_session
         
@@ -88,9 +87,8 @@ class SessionManager:
             previous_session_id = self._current_session.session_id
             self._current_session.save_to_file()
         
-        # Load new session
-        assistant = create_azor_assistant()
-        new_session, error = ChatSession.load_from_file(assistant=assistant, session_id=session_id)
+        # Load new session (agent restored from log file)
+        new_session, error = ChatSession.load_from_file(session_id)
         
         if error:
             # Failed to load - don't change current session
@@ -119,7 +117,7 @@ class SessionManager:
         remove_success, remove_error = session_files.remove_session_file(removed_session_id)
 
         # Create a new session regardless of whether the file was successfully removed
-        assistant = create_azor_assistant()
+        assistant = get_default_agent_instance()
         new_session = ChatSession(assistant=assistant)
         self._current_session = new_session
 
@@ -137,12 +135,12 @@ class SessionManager:
             ChatSession: The initialized session
         """
         if cli_session_id:
-            assistant = create_azor_assistant()
-            session, error = ChatSession.load_from_file(assistant=assistant, session_id=cli_session_id)
-            
+            session, error = ChatSession.load_from_file(cli_session_id)
+
             if error:
                 console.print_error(error)
                 # Fallback to new session
+                assistant = get_default_agent_instance()
                 session = ChatSession(assistant=assistant)
                 console.print_info(f"Rozpoczęto nową sesję z ID: {session.session_id}")
             
@@ -154,7 +152,7 @@ class SessionManager:
                 display_history_summary(session.get_history(), session.assistant_name)
         else:
             print("Rozpoczynanie nowej sesji.")
-            assistant = create_azor_assistant()
+            assistant = get_default_agent_instance()
             session = ChatSession(assistant=assistant)
             self._current_session = session
             console.display_help(session.session_id)

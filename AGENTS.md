@@ -71,6 +71,7 @@ Azor the chatdog is a command-line interface chat application that provides an i
 - **Chat Session**: Manages individual conversation history and state
 - **LLM Client**: Unified interface for different model types
 - **Persistence**: WAL logging and session file storage
+- **Subagent**: Entity with `agent_name` and `system_prompt`; package `subagent` provides the `Subagent` class for specialized sub-agents
 
 ## 🚦 Command Reference
 
@@ -111,6 +112,10 @@ src/
 │   ├── __init__.py
 │   ├── assistent.py
 │   └── azor.py
+├── subagent/
+│   ├── __init__.py
+│   └── subagent.py
+│   └── snoppy.py
 ├── cli/
 │   ├── args.py
 │   ├── console.py

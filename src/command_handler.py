@@ -7,8 +7,11 @@ from commands.session_remove import remove_session_command
 from commands.session_rename import rename_session_command
 from commands.session_title import show_session_title_command
 from commands.audio import generate_audio, generate_audio_all
+from commands.agent_list import list_agents_command
+from commands.agent_new import add_agent_command
+from commands.agent_switch import switch_agent_command
 
-VALID_SLASH_COMMANDS = ['/exit', '/quit', '/switch', '/help', '/session', '/pdf', '/audio', '/audio-all']
+VALID_SLASH_COMMANDS = ['/exit', '/quit', '/switch', '/help', '/session', '/pdf', '/audio', '/audio-all', '/agent']
 
 def handle_command(user_input: str) -> bool:
     """
@@ -77,6 +80,13 @@ def handle_command(user_input: str) -> bool:
         else:
             handle_session_subcommand(parts, manager)
 
+    # Agent subcommands
+    elif command == '/agent':
+        if len(parts) < 2:
+            console.print_error("Błąd: Komenda /agent wymaga podkomendy (list, new, switch).")
+        else:
+            handle_agent_subcommand(parts, manager)
+
     elif command == '/pdf':
         current = manager.get_current_session()
         export_session_to_pdf(current.get_history(), current.session_id, current.assistant_name)
@@ -136,3 +146,24 @@ def handle_session_subcommand(parts: list, manager):
         
     else:
         console.print_error(f"Błąd: Nieznana podkomenda dla /session: {subcommand}. Użyj /help.")
+
+
+def handle_agent_subcommand(parts: list, manager):
+    current = manager.get_current_session()
+
+    subcommand = parts[1].lower()
+    if subcommand == 'list':
+        list_agents_command()
+    elif subcommand == 'new':
+        if len(parts) < 4:
+            console.print_error("Błąd: Użycie: /agent new <agent_name> <system_prompt>")
+        else:
+            add_agent_command(parts)
+    elif subcommand == 'switch':
+        if len(parts) < 3:
+            console.print_error("Błąd: Użycie: /agent switch <nazwa_agenta>")
+        else:
+            agent_name = ' '.join(parts[2:]).strip()
+            switch_agent_command(current, agent_name)
+    else:
+        console.print_error(f"Błąd: Nieznana podkomenda dla /agent: {subcommand}. Użyj /help.")

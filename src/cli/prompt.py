@@ -11,8 +11,34 @@ from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.filters import completion_is_selected
 
 # --- Configuration ---
-SLASH_COMMANDS = ('/exit', '/quit', '/switch', '/help', '/session', '/audio', '/audio-all')
+SLASH_COMMANDS = ('/exit', '/quit', '/switch', '/help', '/session', '/audio', '/audio-all', '/agent')
 SESSION_SUBCOMMANDS = ['list', 'display', 'pop', 'clear', 'new', 'remove', 'rename', 'title']
+AGENT_SUBCOMMANDS = ['list', 'new', 'switch']
+COMMAND_SUBCOMMANDS_MAP = {
+    '/session': SESSION_SUBCOMMANDS,
+    '/agent': AGENT_SUBCOMMANDS,
+}
+
+def _tokenize_subcommand(remainder: str, valid_subcommands: list[str]) -> list[tuple[str, str]]:
+    space_prefix = len(remainder) - len(remainder.lstrip())
+    remainder_content = remainder[space_prefix:]
+    
+    parts = remainder_content.split(maxsplit=1)
+    subcommand = parts[0].strip()
+    
+    if subcommand in valid_subcommands:
+        tokens = []
+        if space_prefix > 0:
+            tokens.append(('class:normal-text', remainder[:space_prefix]))
+        # Dodaj subcommand ze stylowaniem
+        tokens.append(('class:subcommand', subcommand))
+        # Dodaj resztę linii jeśli istnieje
+        if len(parts) > 1:
+            tokens.append(('class:normal-text', ' ' + parts[1]))
+        return tokens
+    else:
+        # Jeśli niepoprawny subcommand, zwróć całą resztę jako normal-text
+        return [('class:normal-text', remainder)]
 
 
 class SlashCommandLexer(Lexer):
@@ -27,27 +53,12 @@ class SlashCommandLexer(Lexer):
                 if line.startswith(cmd):
                     tokens = [('class:slash-command', cmd)]
                     remainder = line[len(cmd) :]
-
-                    # Special handling for /session with subcommands
-                    if cmd == '/session' and remainder.strip():
-                        # Find the position where subcommand starts
-                        space_prefix = len(remainder) - len(remainder.lstrip())
-                        remainder_content = remainder[space_prefix:]
-
-                        # Extract subcommand (first word)
-                        parts = remainder_content.split(maxsplit=1)
-                        subcommand = parts[0].strip()
-
-                        # Check if it's a valid subcommand
-                        if subcommand in SESSION_SUBCOMMANDS:
-                            # Add space before subcommand
-                            tokens.append(('class:normal-text', remainder[:space_prefix]))
-                            tokens.append(('class:subcommand', subcommand))
-                            # Add rest of the line if present
-                            if len(parts) > 1:
-                                tokens.append(('class:normal-text', ' ' + parts[1]))
-                        else:
-                            tokens.append(('class:normal-text', remainder))
+                    if cmd in COMMAND_SUBCOMMANDS_MAP and remainder.strip():
+                        subcommand_tokens = _tokenize_subcommand(
+                            remainder, 
+                            COMMAND_SUBCOMMANDS_MAP[cmd]
+                        )
+                        tokens.extend(subcommand_tokens)
                     else:
                         tokens.append(('class:normal-text', remainder))
 
@@ -72,6 +83,7 @@ _commands_completer = NestedCompleter({
     '/help': None,
     '/switch': None,
     '/session': WordCompleter(SESSION_SUBCOMMANDS, ignore_case=False),
+    '/agent': WordCompleter(AGENT_SUBCOMMANDS, ignore_case=False),
     '/audio': None,
     '/audio-all': None,
 })

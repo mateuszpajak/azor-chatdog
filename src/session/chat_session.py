@@ -9,6 +9,7 @@ from llm.ollama_client import OllamaClient
 from assistant import Assistant
 from cli import console
 from session.session_name import generate_session_name
+from agents import get_agent_instance_by_name, get_default_agent_instance
 
 # Context token limit
 
@@ -69,25 +70,39 @@ class ChatSession:
     
     
     @classmethod
-    def load_from_file(cls, assistant: Assistant, session_id: str) -> tuple['ChatSession | None', str | None]:
+    def load_from_file(cls, session_id: str) -> tuple['ChatSession | None', str | None]:
         """
-        Loads a session from disk.
-        
+        Loads a session from disk. Agent is read from the log file; if missing or unknown, AZOR is used.
+
         Args:
-            assistant: Assistant instance to use for this session
             session_id: ID of the session to load
-            
+
         Returns:
             tuple: (ChatSession object or None, error_message or None)
         """
-        history, error = session_files.load_session_history(session_id)
-        
+        history, agent_name, error = session_files.load_session_history(session_id)
+
         if error:
             return None, error
-        
+
+        assistant = get_agent_instance_by_name(agent_name) if agent_name else get_default_agent_instance()
+
         session = cls(assistant=assistant, session_id=session_id, history=history)
         return session, None
-    
+
+    def switch_agent(self, assistant: Assistant | None) -> bool:
+        """
+        Switches the current session to another agent by name. History is preserved; only system prompt changes.
+
+        Returns:
+            bool: True if switch succeeded, False if agent name is unknown.
+        """
+        if assistant is None:
+            return False
+        self.assistant = assistant
+        self._initialize_llm_session()
+        return True
+
     def save_to_file(self, session_name: str | None = None) -> tuple[bool, str | None]:
         """
         Saves this session to disk.
@@ -104,10 +119,11 @@ class ChatSession:
             self._history = self._llm_chat_session.get_history()
         
         return session_files.save_session_history(
-            self.session_id, 
-            self._history, 
-            self.assistant.system_prompt, 
+            self.session_id,
+            self._history,
+            self.assistant.system_prompt,
             self._llm_client.get_model_name(),
+            self.assistant.name,
             session_name
         )
     
@@ -137,7 +153,8 @@ class ChatSession:
             prompt=text,
             response_text=response.text,
             total_tokens=total_tokens,
-            model_name=self._llm_client.get_model_name()
+            model_name=self._llm_client.get_model_name(),
+            agent=self.assistant.name
         )
         
         if not success and error:

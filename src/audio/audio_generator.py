@@ -45,6 +45,9 @@ def generate_audio(text: str, voice_sample: str, output_file_name: str, output_p
     if not voice_sample:
         console.print_error("❌ Brak ścieżki do pliku próbki głosu.")
         return False
+    if not tts_instance:
+        console.print_error("❌ Brak załadowanego modelu TTS.")
+        return False
 
     if verbose:
         console.print_info(f"🤖 Rozpoczynam generowanie głosu Azora do pliku: {output_file_name}.") 
