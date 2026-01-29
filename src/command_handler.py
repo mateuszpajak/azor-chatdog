@@ -10,6 +10,7 @@ from commands.audio import generate_audio, generate_audio_all
 from commands.agent_list import list_agents_command
 from commands.agent_new import add_agent_command
 from commands.agent_switch import switch_agent_command
+from commands.agent_current import show_current_agent_command
 
 VALID_SLASH_COMMANDS = ['/exit', '/quit', '/switch', '/help', '/session', '/pdf', '/audio', '/audio-all', '/agent']
 
@@ -83,7 +84,7 @@ def handle_command(user_input: str) -> bool:
     # Agent subcommands
     elif command == '/agent':
         if len(parts) < 2:
-            console.print_error("Błąd: Komenda /agent wymaga podkomendy (list, new, switch).")
+            console.print_error("Błąd: Komenda /agent wymaga podkomendy (list, new, switch, current).")
         else:
             handle_agent_subcommand(parts, manager)
 
@@ -154,6 +155,8 @@ def handle_agent_subcommand(parts: list, manager):
     subcommand = parts[1].lower()
     if subcommand == 'list':
         list_agents_command()
+    elif subcommand == 'current':
+        show_current_agent_command(current)
     elif subcommand == 'new':
         if len(parts) < 4:
             console.print_error("Błąd: Użycie: /agent new <agent_name> <system_prompt>")
@@ -166,4 +169,4 @@ def handle_agent_subcommand(parts: list, manager):
             agent_name = ' '.join(parts[2:]).strip()
             switch_agent_command(current, agent_name)
     else:
-        console.print_error(f"Błąd: Nieznana podkomenda dla /agent: {subcommand}. Użyj /help.")
+        console.print_error(f"Błąd: Nieznana podkomenda dla /agent: {subcommand}. Użyj /help. (list, new, switch, current)")

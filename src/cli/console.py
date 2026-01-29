@@ -69,6 +69,7 @@ def display_help(session_id: str):
     print_help("  /session rename <NEW_TITLE>               - Nadaje tytuł bieżącej sesji.")
     print_help("  /session title                            - Wyświetla tytuł bieżącej sesji.")
     print_help("\n  /agent list                               - Wyświetla listę dostępnych agentów.")
+    print_help("  /agent current                            - Wyświetla aktualnie ustawionego agenta.")
     print_help("  /agent new <agent_name> <system_prompt>   - Dodaje nowego custom subagenta (trwały zapis).")
     print_help("  /agent switch <AGENT_NAME>                - Przełącza bieżącą sesję na podanego agenta.")
     print_help("\n  /audio                                    - Generuje głos Azora do pliku.")

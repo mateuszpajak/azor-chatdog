@@ -13,7 +13,7 @@ from prompt_toolkit.filters import completion_is_selected
 # --- Configuration ---
 SLASH_COMMANDS = ('/exit', '/quit', '/switch', '/help', '/session', '/audio', '/audio-all', '/agent')
 SESSION_SUBCOMMANDS = ['list', 'display', 'pop', 'clear', 'new', 'remove', 'rename', 'title']
-AGENT_SUBCOMMANDS = ['list', 'new', 'switch']
+AGENT_SUBCOMMANDS = ['list', 'current', 'new', 'switch']
 COMMAND_SUBCOMMANDS_MAP = {
     '/session': SESSION_SUBCOMMANDS,
     '/agent': AGENT_SUBCOMMANDS,

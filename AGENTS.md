@@ -89,6 +89,14 @@ Azor the chatdog is a command-line interface chat application that provides an i
 /exit, /quit         # Exit the application
 ```
 
+### Agent Commands
+```
+/agent list          # List available agents
+/agent current       # Show currently set agent
+/agent new ...       # Add custom subagent
+/agent switch <NAME> # Switch session to given agent
+```
+
 ### Usage Examples
 - Start new session: `python src/run.py`
 - Load specific session: `python src/run.py --session-id=abc123`
