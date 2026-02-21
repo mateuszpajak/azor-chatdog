@@ -6,6 +6,8 @@ from files.wal import append_to_wal
 from llm.gemini_client import GeminiLLMClient
 from llm.llama_client import LlamaClient
 from llm.ollama_client import OllamaClient
+from mcp_client import McpClient
+from mcp_client.tool_converter import to_gemini_tools
 from assistant import Assistant
 from cli import console
 from session.session_name import generate_session_name
@@ -20,6 +22,9 @@ ENGINE_MAPPING = {
     'OLLAMA': OllamaClient,
 }
 
+TOOL_CONVERTER_BY_ENGINE = {
+    'GEMINI': to_gemini_tools,
+}
 
 class ChatSession:
     """
@@ -43,30 +48,44 @@ class ChatSession:
         self._llm_chat_session = None
         self._max_context_tokens = 32768
         self._initialize_llm_session()
-    
+
     def _initialize_llm_session(self):
-        """
-        Creates or recreates the LLM chat session with current history.
-        This should be called after any history modification.
-        """
-        # Walidacja zmiennej ENGINE
         engine = os.getenv('ENGINE', 'GEMINI').upper()
         if engine not in ENGINE_MAPPING:
             valid_engines = ', '.join(ENGINE_MAPPING.keys())
             raise ValueError(f"ENGINE musi być jedną z wartości: {valid_engines}, otrzymano: {engine}")
         
-        # Initialize LLM client if not already created
         if self._llm_client is None:
             SelectedClientClass = ENGINE_MAPPING.get(engine, GeminiLLMClient)
             console.print_info(SelectedClientClass.preparing_for_use_message())
             self._llm_client = SelectedClientClass.from_environment()
             console.print_info(self._llm_client.ready_for_use_message())
         
+        tools, tool_executor = self._resolve_mcp_tools(engine)
+
         self._llm_chat_session = self._llm_client.create_chat_session(
             system_instruction=self.assistant.system_prompt,
             history=self._history,
-            thinking_budget=0
+            thinking_budget=0,
+            tools=tools,
+            tool_executor=tool_executor,
         )
+
+    def _resolve_mcp_tools(self, engine: str):
+        mcp = McpClient()
+        if not mcp.enabled:
+            return None, None
+
+        converter = TOOL_CONVERTER_BY_ENGINE.get(engine)
+        if not converter:
+            return None, None
+
+        try:
+            mcp_tools = mcp.list_tools()
+            return converter(mcp_tools), mcp.call_tool
+        except Exception as e:
+            console.print_error(f"Nie udało się pobrać narzędzi MCP: {e}")
+            return None, None
     
     
     @classmethod
@@ -165,7 +184,8 @@ class ChatSession:
         return response
 
     def generate_session_name(self, text: str) -> str:
-        is_first_query = len(self._history) == 2
+        user_message_count = sum(1 for h in self._history if h.get('role') == 'user')
+        is_first_query = user_message_count == 1
         if is_first_query:
             return generate_session_name(text, self._llm_client)
 

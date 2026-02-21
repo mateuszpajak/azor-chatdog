@@ -9,6 +9,8 @@ markdown
 openai
 tiktoken
 coqui-tts
+transformers=5.0
 torchcodec
 torchaudio
 pydub
+mcp

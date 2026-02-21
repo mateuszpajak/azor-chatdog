@@ -3,9 +3,10 @@ Google Gemini LLM Client Implementation
 Encapsulates all Google Gemini AI interactions.
 """
 
+import json
 import os
 import sys
-from typing import Optional, List, Any, Dict
+from typing import Optional, List, Any, Dict, Callable
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
@@ -15,6 +16,8 @@ from .gemini_validation import GeminiConfig
 DEFAULT_TEMPERATURE = 1
 DEFAULT_TOP_P = 0.95
 DEFAULT_TOP_K = 20
+MAX_TOOL_ROUNDS = 10
+THINKING_BUDGET = os.getenv("THINKING_BUDGET", "0")
 
 class GeminiChatSessionWrapper:
     """
@@ -22,26 +25,33 @@ class GeminiChatSessionWrapper:
     This ensures compatibility with LlamaClient's history format.
     """
     
-    def __init__(self, gemini_session):
-        """
-        Initialize wrapper with Gemini chat session.
-        
-        Args:
-            gemini_session: The actual Gemini chat session object
-        """
+    def __init__(self, gemini_session, tool_executor: Optional[Callable] = None):
         self.gemini_session = gemini_session
+        self._tool_executor = tool_executor
     
     def send_message(self, text: str) -> Any:
-        """
-        Forwards message to Gemini session.
-        
-        Args:
-            text: User's message
-            
-        Returns:
-            Response object from Gemini
-        """
-        return self.gemini_session.send_message(text)
+        response = self.gemini_session.send_message(text)
+        if not self._tool_executor:
+            return response
+
+        rounds = 0
+        while response.function_calls and rounds < MAX_TOOL_ROUNDS:
+            rounds += 1
+            function_response_parts = []
+            for fc in response.function_calls:
+                try:
+                    result = self._tool_executor(fc.name, dict(fc.args) if fc.args else {})
+                except Exception as e:
+                    result = json.dumps({"error": str(e)})
+                function_response_parts.append(
+                    types.Part.from_function_response(
+                        name=fc.name,
+                        response={"result": result},
+                    )
+                )
+            response = self.gemini_session.send_message(function_response_parts)
+
+        return response
     
     def get_history(self) -> List[Dict]:
         """
@@ -159,22 +169,12 @@ class GeminiLLMClient:
     def create_chat_session(self, 
                           system_instruction: str, 
                           history: Optional[List[Dict]] = None,
-                          thinking_budget: int = 0) -> GeminiChatSessionWrapper:
-        """
-        Creates a new chat session with the specified configuration.
-        
-        Args:
-            system_instruction: System role/prompt for the assistant
-            history: Previous conversation history (optional, in universal dict format)
-            thinking_budget: Thinking budget for the model
-            
-        Returns:
-            GeminiChatSessionWrapper with universal dictionary-based interface
-        """
+                          thinking_budget: int = 0,
+                          tools: Optional[List] = None,
+                          tool_executor: Optional[Callable] = None) -> GeminiChatSessionWrapper:
         if not self._client:
             raise RuntimeError("LLM client not initialized")
         
-        # Convert universal dict format to Gemini Content objects
         gemini_history = []
         if history:
             for entry in history:
@@ -187,19 +187,24 @@ class GeminiLLMClient:
                         )
                         gemini_history.append(content)
         
+        config_kwargs = dict(
+            system_instruction=system_instruction,
+            thinking_config=types.ThinkingConfig(thinking_budget=THINKING_BUDGET),
+            temperature=self.temperature,
+            top_p=self.top_p,
+            top_k=self.top_k,
+        )
+        if tools:
+            config_kwargs["tools"] = tools
+            config_kwargs["automatic_function_calling"] = types.AutomaticFunctionCallingConfig(disable=True)
+
         gemini_session = self._client.chats.create(
             model=self.model_name,
             history=gemini_history,
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                thinking_config=types.ThinkingConfig(thinking_budget=thinking_budget),
-                temperature=self.temperature,
-                top_p=self.top_p,
-                top_k=self.top_k
-            )
+            config=types.GenerateContentConfig(**config_kwargs),
         )
         
-        return GeminiChatSessionWrapper(gemini_session)
+        return GeminiChatSessionWrapper(gemini_session, tool_executor=tool_executor)
     
     def count_history_tokens(self, history: List[Dict]) -> int:
         """
