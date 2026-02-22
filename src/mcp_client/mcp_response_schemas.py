@@ -1,21 +1,4 @@
-from google.genai import types
-
-def to_gemini_tools(mcp_tools: list[dict]) -> list[types.Tool]:
-    declarations = []
-    for tool in mcp_tools:
-        schema = tool.get("inputSchema", {})
-        name = tool["name"]
-        declarations.append(
-            types.FunctionDeclaration(
-                name=name,
-                description=tool.get("description", ""),
-                parameters_json_schema=schema if schema.get("properties") else None,
-                response_json_schema=RESPONSE_SCHEMAS.get(name),
-            )
-        )
-    return [types.Tool(function_declarations=declarations)]
-
-RESPONSE_SCHEMAS = {
+MCP_RESPONSE_SCHEMAS = {
     "listChatSessions": {
         "type": "array",
         "items": {
@@ -25,7 +8,7 @@ RESPONSE_SCHEMAS = {
                 "sessionName": {"type": "string", "description": "Nazwa sesji czatu"},
                 "lastModified": {
                     "type": "string",
-                    "description": "Data ostatniej modyfikacji w formacie ISO 8601 (np. 2026-02-21T18:42:15.224658823Z). Użyj tej wartości do filtrowania sesji lub usuwania sesji po dacie",
+                    "description": "Data ostatniej modyfikacji w formacie ISO 8601 (np. 2026-02-21T18:42:15.224658823Z).",
                 },
             },
         },
@@ -61,9 +44,5 @@ RESPONSE_SCHEMAS = {
         "properties": {
             "deleted": {"type": "boolean", "description": "Czy plik sesji został pomyślnie usunięty"},
         },
-    },
-    "getCurrentDateTime": {
-        "type": "string",
-        "description": "Zwraca aktualną datę i godzinę.",
     },
 }

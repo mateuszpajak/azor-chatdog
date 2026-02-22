@@ -22,6 +22,12 @@ def create_azor_assistant() -> Assistant:
     - Najpierw wywołaj odpowiednie narzędzie, aby pobrać dane
     - Jeśli narzędzie nie ma parametrów do filtrowania, pobierz wszystkie dane i samodzielnie przeanalizuj wyniki
     - Nigdy nie mów, że "narzędzie nie pozwala na filtrowanie" -- Ty sam potrafisz filtrować dane po ich otrzymaniu
+
+    Zanim odpowiesz na pytanie użytkownika, zawsze zastanów się:
+    - Czy pytanie nie jest zbyt ogólne lub zbyt szerokie?
+    - Czy może mieć wiele znaczeń lub interpretacji?
+    - Czy potrafisz na nie odpowiedzieć dobrze, mając dostępny kontekst?
+    Jeżeli stwierdzisz, że mógłbyś potrzebować więcej informacji (np. brak kontekstu, kilka możliwych interpretacji, zbyt ogólne sformułowanie), użyj narzędzia askForClarification: podaj pytanie wyjaśniające oraz cztery opcje odpowiedzi. Po otrzymaniu wyboru użytkownika kontynuuj rozmowę w oparciu o wybraną opcję.
     """
     
     return Assistant(

@@ -6,8 +6,7 @@ from files.wal import append_to_wal
 from llm.gemini_client import GeminiLLMClient
 from llm.llama_client import LlamaClient
 from llm.ollama_client import OllamaClient
-from mcp_client import McpClient
-from mcp_client.tool_converter import to_gemini_tools
+from tools import resolve_tools_for_engine
 from assistant import Assistant
 from cli import console
 from session.session_name import generate_session_name
@@ -20,10 +19,6 @@ ENGINE_MAPPING = {
     'LLAMA_CPP': LlamaClient,
     'GEMINI': GeminiLLMClient,
     'OLLAMA': OllamaClient,
-}
-
-TOOL_CONVERTER_BY_ENGINE = {
-    'GEMINI': to_gemini_tools,
 }
 
 THINKING_BUDGET = os.getenv("THINKING_BUDGET", 0)
@@ -63,7 +58,7 @@ class ChatSession:
             self._llm_client = SelectedClientClass.from_environment()
             console.print_info(self._llm_client.ready_for_use_message())
         
-        tools, tool_executor = self._resolve_mcp_tools(engine)
+        tools, tool_executor = resolve_tools_for_engine(engine)
 
         self._llm_chat_session = self._llm_client.create_chat_session(
             system_instruction=self.assistant.system_prompt,
@@ -73,23 +68,6 @@ class ChatSession:
             tool_executor=tool_executor,
         )
 
-    def _resolve_mcp_tools(self, engine: str):
-        mcp = McpClient()
-        if not mcp.enabled:
-            return None, None
-
-        converter = TOOL_CONVERTER_BY_ENGINE.get(engine)
-        if not converter:
-            return None, None
-
-        try:
-            mcp_tools = mcp.list_tools()
-            return converter(mcp_tools), mcp.call_tool
-        except Exception as e:
-            console.print_error(f"Nie udało się pobrać narzędzi MCP: {e}")
-            return None, None
-    
-    
     @classmethod
     def load_from_file(cls, session_id: str) -> tuple['ChatSession | None', str | None]:
         """
