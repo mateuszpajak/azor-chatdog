@@ -26,6 +26,8 @@ TOOL_CONVERTER_BY_ENGINE = {
     'GEMINI': to_gemini_tools,
 }
 
+THINKING_BUDGET = os.getenv("THINKING_BUDGET", 0)
+
 class ChatSession:
     """
     Manages everything related to a single chat session.
@@ -66,7 +68,7 @@ class ChatSession:
         self._llm_chat_session = self._llm_client.create_chat_session(
             system_instruction=self.assistant.system_prompt,
             history=self._history,
-            thinking_budget=0,
+            thinking_budget=THINKING_BUDGET,
             tools=tools,
             tool_executor=tool_executor,
         )
@@ -183,11 +185,11 @@ class ChatSession:
         
         return response
 
-    def generate_session_name(self, text: str) -> str:
+    def generate_session_name(self, session_id: str, text: str) -> str:
         user_message_count = sum(1 for h in self._history if h.get('role') == 'user')
         is_first_query = user_message_count == 1
         if is_first_query:
-            return generate_session_name(text, self._llm_client)
+            return generate_session_name(session_id, text, self._llm_client)
 
         return None
     

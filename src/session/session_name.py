@@ -3,6 +3,7 @@ import os
 import json
 from files.config import LOG_DIR
 from cli import console
+from session import session_cache
 
 def update_session_name(session_id: str, new_name: str) -> tuple[bool, str | None]:
     log_path = os.path.join(LOG_DIR, f"{session_id}-log.json")
@@ -17,7 +18,8 @@ def update_session_name(session_id: str, new_name: str) -> tuple[bool, str | Non
         
         with open(log_path, 'w', encoding='utf-8') as f:
             json.dump(log_data, f, indent=4, ensure_ascii=False)
-        
+
+        session_cache.upsert_session(session_id, new_name)
         return True, None
     except Exception as e:
         return False, f"Error updating session name: {e}"
@@ -34,7 +36,7 @@ def read_session_name(session_id: str) -> str:
     except Exception:
         return ""
 
-def generate_session_name(user_prompt: str, llm_client) -> str:
+def generate_session_name(session_id: str, user_prompt: str, llm_client) -> str:
     title_system_prompt = """
         Stwórz krótki, zwięzły tytuł (maksymalnie 50-60 znaków) podsumowujący następujące zapytanie użytkownika. 
         Tytuł powinien być w języku polskim i opisywać główny temat zapytania. Zwróć TYLKO tytuł, bez dodatkowych komentarzy.
@@ -53,6 +55,7 @@ def generate_session_name(user_prompt: str, llm_client) -> str:
         if len(title) > 60:
             title = title[:57] + "..."
         
+        session_cache.upsert_session(session_id, title)
         return title
     except Exception as e:
         console.print_error(f"Błąd podczas generowania tytułu sesji: {e}")

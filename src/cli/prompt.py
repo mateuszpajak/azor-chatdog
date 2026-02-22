@@ -4,11 +4,12 @@ Includes syntax highlighting, auto-completion, and custom key bindings.
 """
 
 from prompt_toolkit import prompt
-from prompt_toolkit.completion import NestedCompleter, WordCompleter
+from prompt_toolkit.completion import Completer, Completion, NestedCompleter, WordCompleter
 from prompt_toolkit.lexers import Lexer
 from prompt_toolkit.styles import Style
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.filters import completion_is_selected
+from session import session_cache
 
 # --- Configuration ---
 SLASH_COMMANDS = ('/exit', '/quit', '/switch', '/help', '/session', '/audio', '/audio-all', '/agent')
@@ -39,6 +40,17 @@ def _tokenize_subcommand(remainder: str, valid_subcommands: list[str]) -> list[t
     else:
         # Jeśli niepoprawny subcommand, zwróć całą resztę jako normal-text
         return [('class:normal-text', remainder)]
+
+
+class SessionCompleter(Completer):
+    """Dynamic completer for /switch — reads session IDs and names from cache."""
+
+    def get_completions(self, document, complete_event):
+        word = document.text_before_cursor
+        for session_id, name in session_cache.get_sessions().items():
+            if session_id.startswith(word):
+                display = f"{session_id}:{name}" if name else session_id
+                yield Completion(session_id, start_position=-len(word), display=display)
 
 
 class SlashCommandLexer(Lexer):
@@ -81,7 +93,7 @@ _commands_completer = NestedCompleter({
     '/exit': None,
     '/quit': None,
     '/help': None,
-    '/switch': None,
+    '/switch': SessionCompleter(),
     '/session': WordCompleter(SESSION_SUBCOMMANDS, ignore_case=False),
     '/agent': WordCompleter(AGENT_SUBCOMMANDS, ignore_case=False),
     '/audio': None,

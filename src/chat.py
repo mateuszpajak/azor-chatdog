@@ -1,7 +1,7 @@
 import atexit
 import files.config as config
 import cli.args
-from session import get_session_manager
+from session import get_session_manager, session_cache
 import command_handler
 from cli import console
 from cli.prompt import get_user_input
@@ -19,6 +19,9 @@ def init_chat():
     
     # Load TTS model
     load_model()
+
+    # Populate session cache for /switch autocomplete
+    session_cache.init_session_cache()
 
     # Register cleanup handler
     atexit.register(lambda: manager.cleanup_and_save())
@@ -47,7 +50,7 @@ def main_loop():
             response = session.send_message(user_input)
 
             # Generate session name if it's the first query
-            session_name = session.generate_session_name(user_input)
+            session_name = session.generate_session_name(session.session_id, user_input)
             
             # Get token information
             total_tokens, remaining_tokens, max_tokens = session.get_token_info()

@@ -17,7 +17,6 @@ DEFAULT_TEMPERATURE = 1
 DEFAULT_TOP_P = 0.95
 DEFAULT_TOP_K = 20
 MAX_TOOL_ROUNDS = 10
-THINKING_BUDGET = os.getenv("THINKING_BUDGET", "0")
 
 class GeminiChatSessionWrapper:
     """
@@ -189,7 +188,7 @@ class GeminiLLMClient:
         
         config_kwargs = dict(
             system_instruction=system_instruction,
-            thinking_config=types.ThinkingConfig(thinking_budget=THINKING_BUDGET),
+            thinking_config=types.ThinkingConfig(thinking_budget=thinking_budget),
             temperature=self.temperature,
             top_p=self.top_p,
             top_k=self.top_k,

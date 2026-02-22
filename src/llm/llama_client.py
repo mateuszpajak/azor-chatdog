@@ -4,7 +4,7 @@ Encapsulates all local LLaMA model interactions using llama-cpp-python.
 """
 
 import os
-from typing import Optional, List, Any, Dict
+from typing import Optional, List, Any, Dict, Callable
 from llama_cpp import Llama
 from dotenv import load_dotenv
 from cli import console
@@ -241,7 +241,9 @@ class LlamaClient:
     def create_chat_session(self, 
                           system_instruction: str, 
                           history: Optional[List[Dict]] = None,
-                          thinking_budget: int = 0) -> LlamaChatSession:
+                          thinking_budget: int = 0,
+                          tools: Optional[List] = None,
+                          tool_executor: Optional[Callable] = None) -> LlamaChatSession:
         """
         Creates a new chat session with the specified configuration.
         
@@ -249,7 +251,8 @@ class LlamaClient:
             system_instruction: System role/prompt for the assistant
             history: Previous conversation history (optional)
             thinking_budget: Ignored for LLaMA (compatibility parameter)
-            
+            tools: List of tools to use (optional)
+            tool_executor: Function to execute tools (optional)
         Returns:
             LlamaChatSession object
         """

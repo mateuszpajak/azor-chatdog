@@ -2,7 +2,7 @@ import os
 import requests
 import tiktoken
 
-from typing import Optional, List, Any, Dict
+from typing import Optional, List, Any, Dict, Callable
 from openai import OpenAI
 from dotenv import load_dotenv
 from cli import console
@@ -87,7 +87,9 @@ class OllamaClient:
     def create_chat_session(self, 
                            system_instruction: str, 
                            history: Optional[List[Dict]] = None,
-                           thinking_budget: int = 0) -> OllamaChatSession:
+                           thinking_budget: int = 0,
+                           tools: Optional[List[Dict]] = None,
+                           tool_executor: Optional[Callable] = None) -> OllamaChatSession:
         return OllamaChatSession(
             client=self._ollama_client,
             model_name=self.model_name,

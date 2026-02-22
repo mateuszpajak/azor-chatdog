@@ -1,4 +1,5 @@
 from cli import console
+from session import session_cache
 from .chat_session import ChatSession
 from agents import get_default_agent_instance
 from files import session_files
@@ -58,7 +59,8 @@ class SessionManager:
         assistant = get_default_agent_instance()
         new_session = ChatSession(assistant=assistant)
         self._current_session = new_session
-        
+        session_cache.upsert_session(new_session.session_id)
+
         return new_session, save_attempted, previous_session_id, save_error
     
     def switch_to_session(self, session_id: str) -> tuple[ChatSession | None, bool, str | None, bool, str | None, bool]:
@@ -112,7 +114,8 @@ class SessionManager:
             raise RuntimeError("No session is active to remove.")
 
         removed_session_id = self._current_session.session_id
-        
+        session_cache.remove_session(removed_session_id)
+
         # Remove the session file
         remove_success, remove_error = session_files.remove_session_file(removed_session_id)
 
